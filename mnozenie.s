@@ -15,7 +15,7 @@
 	liczba1_len= (.-liczba1)/4
 	
 	liczba2:
-		.long 0xF040500C#, 0x00220026, 0x321000CB , 0x04520031
+		.long 0xF040500C, 0x00220026#, 0x321000CB , 0x04520031
 	
 	liczba2_len= (.-liczba2)/4
 
@@ -38,20 +38,28 @@
 	mov $liczba1_len, %edi
 	mov $liczba2_len, %esi	
 	mov $0, %edx
+	mov $0, %ebx
 	dec %esi
-	mov liczba2(,%esi,1), %eax
+	mov liczba2(,%esi,4), %eax
 	mov %eax, part2(,%ebx,4)
 
 	clc
 	#pushf	
 	jmp _mnozenie
 
-	_incEdxIKontynnujMnozenie:
-	inc %edx
+	_resetNumber1:
+	mov $0, %ebx
 	mov $liczba1_len, %edi
 	dec %edi
 	mov liczba1(,%edi,4), %eax
 	mov %eax, part(,%ebx,4)
+	ret
+
+	_incEdxIKontynnujMnozenie:
+	call _resetNumber1
+	inc %edx
+	cmp $4, %edx
+	je _nextWordInPart2
 	jmp _mnozenieUp
 	
 	_mnozenie:
@@ -65,10 +73,14 @@
 	jmp _mnozenieUp
 	
 	
-	_mnozenieWew:	#flagi, przeniesienie
+	_nextWordInPart2:	
+	cmp $0, %esi		#zakonczenie generowania ilocz. czesc.
+	je _exit
 	dec %esi
-	mov liczba2(,%esi,1), %eax
+	mov liczba2(,%esi,4), %eax
 	mov %eax, part2(,%ebx,4)
+	mov $0, %edx
+
 	_mnozenieUp:
 	mov part2(,%edx,1), %al
 	mov part(,%ebx,1), %cl
