@@ -100,7 +100,7 @@
 	pop %edx
 	dec %edx
 	clc
-	cmp $0,%edx
+	cmp $0,%edx	# liczba 32 bitowych blokow do wypisania w edx
 	je _exit
 	jmp _wypiszStack  	
 

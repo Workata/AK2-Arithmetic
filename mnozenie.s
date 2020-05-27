@@ -5,21 +5,27 @@
 	SYSREAD = 3
 	STDIN = 0
 
-	.global _start	#o
+	.global _start	
 
 	.data
+
+	cyfra: .long 0x00
+	cyfry_len = .-cyfra
 
 	liczba1:
 		.long 0x103040FF#, 0x701100FF#,  0x45100020 , 0x08570030
 
-	liczba1_len = .-liczba1  #8
+	liczba1_len = .-liczba1  #4
 	
 	liczba2:
 		.long 0xF04050FF#, 0x00220026#, 0x321000CB , 0x04520031
 	
-	liczba2_len=  .-liczba2  #8
+	liczba2_len=  .-liczba2  #4
+
+	enter: .ascii "\n"
+	enter_len = .-enter
 	
-	
+	#regOnStack = (liczba1_len+liczba2_len)/4
 
 	_start:	#liczba2 x liczba1
 
@@ -29,6 +35,92 @@
 	#mov $16, %edx
 	#int $0x80
 	
+	#mov $regOnStack, %eax
+	
+	jmp mnozenie
+	
+	_notLetter:
+	add $0x30, %dx
+	jmp _cont
+
+	
+	_letter:
+	add $0x37, %dx
+	ret
+	
+	_checkValue:
+	clc
+	cmp $0x09, %dx
+	jle _notLetter
+	call _letter
+	_cont:
+	ret
+
+
+
+	#------------------POCZATEK----WYPISYWANIA----LICZB----
+	# liczba 32 biowych blokow ma byc w edx	
+	
+	_wypiszStackPrep:
+
+	mov $2, %edx
+	mov $0, %edi
+	push wynik(,%edi,4)
+	mov $1, %edi
+	push wynik(,%edi,4)	
+
+	_wypiszStack:	#Funkcja wypisujaca wynik ze stosu
+
+	clc
+	mov $0, %edi	
+	pop %eax
+	push %edx	# store edx
+	
+
+	mov $8, %ecx	
+	_pushDigit:
+
+	mov $0, %dx
+	mov $0x00000010, %ebx
+	div %ebx
+	call _checkValue
+	push %edx
+
+	dec %ecx
+	cmp $0, %ecx
+	jne _pushDigit
+
+		
+	mov $8, %ecx
+	_showDigit:
+	
+	pop %edx
+	mov %dl, cyfra(,%edi,1)
+	
+	push %ecx	
+
+	mov $SYSWRITE, %eax
+	mov $STDOUT, %ebx
+	mov $cyfra, %ecx
+	mov $cyfry_len, %edx
+	int $0x80
+
+	pop %ecx
+	dec %ecx
+	cmp $0, %ecx
+	jne _showDigit
+	
+	
+	pop %edx
+	dec %edx
+	clc
+	cmp $0,%edx	# liczba 32 bitowych blokow do wypisania w edx
+	je _exit
+	jmp _wypiszStack  	
+
+	#-------KONIEC WYPISYWANIA LICZB--------------------------	
+
+	mnozenie:
 
 	clc
 	pushf
@@ -94,7 +186,7 @@
 	cmp $liczba1_len, %edi	#sprawdzamy czy zewnetrzna sie zakonczyla
 	jl petlaZew
 	
-	jmp _exit	#jezeli sie zakonczyla to wyjdz
+	jmp _wypiszStackPrep	#jezeli sie zakonczyla to wypisz i wyjdz
 	
 
 	#przeniesienie wynikajace z dodawania do wyniku
@@ -108,6 +200,13 @@
 
 	
 	_exit:
+
+	mov $SYSWRITE, %eax
+	mov $STDOUT, %ebx
+	mov $enter, %ecx
+	mov $enter_len, %edx
+	int $0x80
+
 	mov $SYSEXIT, %eax
 	mov $EXIT_SUCCESS, %ebx
 	int $0x80
