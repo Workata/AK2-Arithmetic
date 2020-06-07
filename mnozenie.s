@@ -12,32 +12,73 @@
 	cyfra: .long 0x00
 	cyfry_len = .-cyfra
 
-	liczba1:
-		.long 0x103040FF#, 0x701100FF#,  0x45100020 , 0x08570030
+	#liczba1:
+		#.long 0x103040FF#, 0x701100FF#,  0x45100020 , 0x08570030
 
-	liczba1_len = .-liczba1  #4
+	liczba1_len = 8  #4
 	
-	liczba2:
-		.long 0xF04050FF#, 0x00220026#, 0x321000CB , 0x04520031
+	#liczba2:
+		#.long 0xF04050FF#, 0x00220026#, 0x321000CB , 0x04520031
 	
-	liczba2_len=  .-liczba2  #4
+	liczba2_len=  8 #4
+	ASCIIstring_len = 32
 
 	enter: .ascii "\n"
 	enter_len = .-enter
 	
-	#regOnStack = (liczba1_len+liczba2_len)/4
+	wordsOnStack =  4 #(liczba1_len+liczba2_len)/4
 
 	_start:	#liczba2 x liczba1
 
-	#mov $SYSREAD, %eax
-	#mov $STDIN, %ebx
-	#mov $liczba1, %ecx
-	#mov $16, %edx
-	#int $0x80
+	mov $SYSREAD, %eax
+	mov $STDIN, %ebx
+	mov $ASCIIstring, %ecx
+	mov $32, %edx
+	int $0x80
 	
-	#mov $regOnStack, %eax
+	#---------------CONVERT ASCII TO HEX----------------
+	mov $0, %edi
+	mov $0, %esi
+	mov $0, %edx
+
+	_ASCIItoHEX:
+	cmp $32, %esi
+	je mnozenie
+
+	mov ASCIIstring(,%esi,1), %al
+	clc
+	cmp $0x39, %al
+	jg _letterAH
 	
-	jmp mnozenie
+	sub $0x30, %al
+	_checkPosition:
+	clc
+	cmp $0, %edx
+	jne _secondDigit
+
+	add %al, liczba1(,%edi,1)
+	mov $1, %edx
+	inc %esi
+	jmp _ASCIItoHEX
+
+	_secondDigit:
+	mov $0x10, %bl
+	mul %bl
+	add %eax, liczba1(,%edi,1)
+	mov $0, %edx
+	inc %esi
+	inc %edi
+	jmp _ASCIItoHEX
+
+	_letterAH:
+	sub $0x37, %al
+	jmp _checkPosition
+
+
+	#-----------(END)---CONVERT ASCII TO HEX-------------	
+
+	
+	#jmp mnozenie
 	
 	_notLetter:
 	add $0x30, %dx
@@ -59,21 +100,22 @@
 
 
 	#------------------POCZATEK----WYPISYWANIA----LICZB----
-	# liczba 32 biowych blokow ma byc w edx	
+	# liczba 32 bitowych blokow (slow)  ma byc w edx	
 	
 	_wypiszStackPrep:
 
-	mov $2, %edx
+	mov $wordsOnStack, %edx
 	mov $0, %edi
-	push wynik(,%edi,4)
-	mov $1, %edi
-	push wynik(,%edi,4)	
+	#push wynik(,%edi,4)
+	#mov $1, %edi
+	#push wynik(,%edi,4)
+	mov $wordsOnStack, %esi	
 
 	_wypiszStack:	#Funkcja wypisujaca wynik ze stosu
-
+	dec %esi
 	clc
 	mov $0, %edi	
-	pop %eax
+	mov wynik(,%esi,4), %eax  #pop %eax
 	push %edx	# store edx
 	
 
@@ -213,9 +255,9 @@
 
 
 	.bss
-	#.lcomm liczba1, 8
-	#.lcomm liczba2, 8
+	.lcomm liczba1, liczba1_len	# dlugosc liczby1 w bajtach
+	.lcomm liczba2, liczba2_len	# dlugosc liczby2 w bajtach
+	.lcomm ASCIIstring, ASCIIstring_len	# liczba znakow w pliku wej. (bajtow)
 	.lcomm wynik, 256
-	#wynik: .space 256
 	
 	
