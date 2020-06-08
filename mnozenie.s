@@ -8,32 +8,33 @@
 	.global _start	
 
 	.data
-
+	
+	# potrzebne do wypisania liczby jako kod ASCII
 	cyfra: .long 0x00
 	cyfry_len = .-cyfra
-
-	#liczba1:
-		#.long 0x103040FF#, 0x701100FF#,  0x45100020 , 0x08570030
-
-	liczba1_len = 8  #4
 	
-	#liczba2:
-		#.long 0xF04050FF#, 0x00220026#, 0x321000CB , 0x04520031
-	
-	liczba2_len=  8 #4
-	ASCIIstring_len = 32
+	# dlugosc pierwszej liczby (w bajtach) - trzeba okreslic!
+	liczba1_len = 8      
+	# dlugosc drugiej liczby (w bajtach) - trzeba okreslic!
+	liczba2_len=  8      
+	# dlugosc ciagu znakow na wejsciu (w bajtach) - obliczana
+	ASCIIstring_len = (liczba1_len+liczba2_len)*2  
 
+	# znak 'enter' do wypisania po zakonczeniu programu
 	enter: .ascii "\n"
 	enter_len = .-enter
 	
-	wordsOnStack =  4 #(liczba1_len+liczba2_len)/4
+	# maksymalna liczba slow (32b) do wypisania na wyjsciu - obliczana
+	wordsOnStack =  (liczba1_len+liczba2_len)/4
 
-	_start:	#liczba2 x liczba1
+	_start:	# Mnozenie w kolejnosci: liczba2 x liczba1
+
+	# ----------WCZYTANIE--LICZB--JAKO--JEDEN---CIAG----
 
 	mov $SYSREAD, %eax
 	mov $STDIN, %ebx
 	mov $ASCIIstring, %ecx
-	mov $32, %edx
+	mov $ASCIIstring_len, %edx
 	int $0x80
 	
 	#---------------CONVERT ASCII TO HEX----------------
