@@ -9,33 +9,78 @@
 	.global _start
 
 	.data
-
-	liczba1:
-		.long 0x10304009, 0x701100F1, 0x45100020 , 0x08570030
-
-	liczba1_len=( .-liczba1)/4  #
-
-	liczba1_len_bytes = .-liczba1
 	
-	liczba2:
-		.long 0x10405003, 0x00220026, 0x321000C3 , 0x04520031
-	
-	liczba2_len=(.-liczba2)/4
+	# wielkosc liczb w bajtach
+	liczba1_len= 8	
+	liczba2_len= 8
+	# wielkosc liczb w slowach
+	liczba1_len_word = liczba1_len/4
+	liczba2_len_word = liczba2_len/4
 	
 	cyfra: .long 0x00	
 	cyfry_len=.-cyfra
+
+	# dlugosc liczby znakow na wejsciu (w ba
+	ASCIIstring_len = 32	
 	
 	enter: .ascii "\n"
 	enter_len = .-enter
 
+	# zakladajac, ze liczba 2 jest nie dluzsza niz 1
+	wordsOnStack = liczba1_len_word+1
+	# w przeciwnym wypadku powinno byc liczba2_len_word +1
+
 	_start:
+
+	# ----------WCZYTANIE--LICZB--JAKO--JEDEN---CIAG----
+  
+        mov $SYSREAD, %eax
+        mov $STDIN, %ebx
+        mov $ASCIIstring, %ecx
+        mov $ASCIIstring_len, %edx
+        int $0x80
+
+	#---------------CONVERT ASCII TO HEX----------------
+	mov $0, %edi
+	mov $0, %esi
 	mov $0, %edx
-	mov $liczba1_len, %edi
-	mov $liczba2_len, %esi	
 
-	clc	
-	jmp _dodawaniePierwszyRaz
+	_ASCIItoHEX:
+	cmp $32, %esi
+	je dodawanie
 
+	mov ASCIIstring(,%esi,1), %al
+	clc
+	cmp $0x39, %al
+	jg _letterAH
+	
+	sub $0x30, %al
+	_checkPosition:
+	clc
+	cmp $0, %edx
+	jne _secondDigit
+
+	add %al, liczba1(,%edi,1)
+	mov $1, %edx
+	inc %esi
+	jmp _ASCIItoHEX
+
+	_secondDigit:
+	mov $0x10, %bl
+	mul %bl
+	add %eax, liczba1(,%edi,1)
+	mov $0, %edx
+	inc %esi
+	inc %edi
+	jmp _ASCIItoHEX
+
+	_letterAH:
+	sub $0x37, %al
+	jmp _checkPosition
+
+
+	#-----------(END)---CONVERT ASCII TO HEX-------------
+	
 	_notLetter:
 	add $0x30, %dx
 	jmp _cont
@@ -53,14 +98,23 @@
 	_cont:
 	ret
 
-#------------------POCZATEK----WYPISYWANIA----LICZB----
-	
-	_wypiszStack:	#Funkcja wypisujaca wynik ze stosu
-	clc
 
+
+	#------------------POCZATEK----WYPISYWANIA----LICZB----
+	# liczba 32 bitowych blokow (slow)  ma byc w edx	
+	
+	_wypiszStackPrep:
+
+	mov $wordsOnStack, %edx
+	mov $0, %edi
+	mov $wordsOnStack, %esi	
+
+	_wypiszStack:	#Funkcja wypisujaca wynik ze stosu
+	dec %esi
+	clc
 	mov $0, %edi	
-	pop %eax
-	push %edx	
+	mov wynik(,%esi,4), %eax  #pop %eax
+	push %edx	# store edx
 	
 
 	mov $8, %ecx	
@@ -104,16 +158,35 @@
 	je _exit
 	jmp _wypiszStack  	
 
-	
-#--------------KONIEC--WYPISYWANIA---LICZB--------------------
+	#-------KONIEC WYPISYWANIA LICZB--------------------------	
+
+	dodawanie:
+	mov $0, %edx	# wyzerowanie licznika indeksu wyniku
+	mov $0, %edi	# wyzerowanie licznika indeksu liczby 1
+	mov $0, %esi	# wyzerowanie licznika indeksu liczby 2
+
+	#wyzerowanie bufora
+	zerujWynik:
+	mov $0x00000000, %eax
+	mov %eax, wynik(,%edi,4)
+	inc %edi
+	cmp $256, %edi
+	jl zerujWynik
+
+	mov $0,%edi
+
+
+	clc	
+	jmp _dodawaniePierwszyRaz
+
 
 	_drugaSieSkonczylaAleSprawdzCzyPierwszaTez:
-	cmp $0, %edi	#jezeli pierwsza tez sie skonczyla to wyjdz
+	cmp $liczba1_len_word, %edi	#jezeli pierwsza tez sie skonczyla to wyjdz
 	jz _sprawdzOstatniePrzeniesienie
 	jmp _drugaSieSkonczyla
 	
 	_pierwszaSieSkonczylaAleSprawdzCzyDrugaTez:
-	cmp $0, %esi	#jezeli druga tez sie skonczyla to wyjdz
+	cmp $liczba2_len_word, %esi	#jezeli druga tez sie skonczyla to wyjdz
 	jz _sprawdzOstatniePrzeniesienie
 	jmp _pierwszaSieSkonczyla
 
@@ -121,57 +194,62 @@
 	_drugaSieSkonczyla:
 	popf
 
-	dec %edi
 	mov $0,%eax
 	adc liczba1(,%edi,4),%eax
-	push %eax
+	mov %eax, wynik(,%edx,4)        # push %eax
+	inc %edi
+	inc %edx
 	pushf
 	
-	cmp $0, %edi	#jezeli pierwsza tez sie skonczyla to wyjdz
+	cmp $liczba1_len_word, %edi #jezeli pierwsza tez sie skonczyla to wyjdz
 	jz _sprawdzOstatniePrzeniesienie
 	jmp _drugaSieSkonczyla
 	
 	_pierwszaSieSkonczyla:
 	popf
 
-	dec %esi
 	mov $0,%eax
 	adc liczba2(,%esi,4),%eax
-	push %eax
+	mov %eax, wynik(,%edx,4)	# push %eax
+	inc %esi
+	inc %edx
 	pushf
 	
-	cmp $0, %esi		#jezeli druga tez sie skonczyla to wyjdz
+	cmp $liczba2_len_word, %esi #jezeli druga tez sie skonczyla to wyjdz
 	jz _sprawdzOstatniePrzeniesienie
 	jmp _pierwszaSieSkonczyla
 	
 	_dodawanie:
 	popf
 	_dodawaniePierwszyRaz:
-	dec %edi
-	dec %esi
 
 	mov liczba1(,%edi,4),%eax
 	adc liczba2(,%esi,4) ,%eax      
-	push %eax
-	inc %edx	#tu mam zapisane jak duzo jest slow na stosie	
+	mov %eax, wynik(,%edx,4)  # push %eax	
+
+	inc %edx
+	inc %edi
+	inc %esi
 	pushf
 
-	cmp $0,%esi					
+	cmp $liczba2_len_word, %esi					
 	jz _drugaSieSkonczylaAleSprawdzCzyPierwszaTez
-	cmp $0, %edi
+	cmp $liczba1_len_word, %edi
 	jz _pierwszaSieSkonczylaAleSprawdzCzyDrugaTez  
 
 	jmp _dodawanie
 
 	_dodajOstatniePrzeniesienie:
-	push $1
-	inc %edx
-	jmp _wypiszStack
+	mov $1, %eax  		# push $1
+	mov %eax, wynik(,%edx,4)
+	# juz nie trzeba inkrementowac edx
+	
+	jmp _wypiszStackPrep
 
 	_sprawdzOstatniePrzeniesienie:
 	popf
 	jc _dodajOstatniePrzeniesienie
-	jmp _wypiszStack
+	jmp _wypiszStackPrep
 
 	_exit:
 
@@ -186,3 +264,12 @@
 	mov $SYSEXIT, %eax
 	mov $EXIT_SUCCESS, %ebx
 	int $0x80
+
+
+	.bss
+	.lcomm liczba1, liczba1_len
+	.lcomm liczba2, liczba2_len
+	.lcomm ASCIIstring, ASCIIstring_len
+	.lcomm wynik, 256
+
+

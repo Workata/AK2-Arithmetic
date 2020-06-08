@@ -107,9 +107,6 @@
 
 	mov $wordsOnStack, %edx
 	mov $0, %edi
-	#push wynik(,%edi,4)
-	#mov $1, %edi
-	#push wynik(,%edi,4)
 	mov $wordsOnStack, %esi	
 
 	_wypiszStack:	#Funkcja wypisujaca wynik ze stosu
