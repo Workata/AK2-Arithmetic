@@ -22,9 +22,17 @@
 
 	# dlugosc liczby znakow na wejsciu (w ba
 	ASCIIstring_len = 32	
+
+	# deklaracja przydatnych stringow
 	
 	enter: .ascii "\n"
 	enter_len = .-enter
+
+	msg1: .ascii "Wynik (hex) : "
+	msg1_len = .-msg1
+
+	msg2: .ascii "Liczba cykli procesora podczas wykonywania operacji (hex): "
+	msg2_len = .-msg2
 
 	# zakladajac, ze liczba 2 jest nie dluzsza niz 1
 	wordsOnStack = liczba1_len_word+1
@@ -84,7 +92,6 @@
 	_notLetter:
 	add $0x30, %dx
 	jmp _cont
-
 	
 	_letter:
 	add $0x37, %dx
@@ -104,7 +111,33 @@
 	# liczba 32 bitowych blokow (slow)  ma byc w edx	
 	
 	_wypiszStackPrep:
+	
+	# koniec liczenia cykli
+	xor %eax, %eax	# wyzerowanie eax
+	cpuid	# serializacja -> komendy zostana wykonane w kolejnosci
+	rdtsc	# zwraca liczbe cykli procesora, 64 bity: edx <-> eax
 
+	pop %ecx	# starsza czesc poprzednich cykli
+	pop %ebx	# mlodsza czesc poprzednich cykli
+
+	clc
+	sub %ebx, %eax
+	sbb %ecx, %edx
+
+	mov $0, %ebx
+	mov %eax, liczbaCykli(,%ebx,4)
+	inc %ebx
+	mov %edx, liczbaCykli(,%ebx,4)
+		
+
+	# koniec tej czesci liczenia cykli
+
+	mov $SYSWRITE, %eax
+	mov $STDOUT, %ebx
+	mov $msg1, %ecx
+	mov $msg1_len, %edx
+	int $0x80
+	
 	mov $wordsOnStack, %edx
 	mov $0, %edi
 	mov $wordsOnStack, %esi	
@@ -158,14 +191,81 @@
 	je _exit
 	jmp _wypiszStack  	
 
-	#-------KONIEC WYPISYWANIA LICZB--------------------------	
+	#-------KONIEC WYPISYWANIA LICZB--------------------------
+
+	#-------Wypisanie liczby cykli---------------------------
+	_wypiszLiczbeCykli:
+
+	mov $SYSWRITE, %eax
+	mov $STDOUT, %ebx
+	mov $msg2, %ecx
+	mov $msg2_len, %edx
+	int $0x80
+	
+	
+	mov $2, %edx
+	mov $0, %edi
+	mov $2, %esi	
+
+	_wypiszStack2:	#Funkcja wypisujaca liczbe cykli
+	dec %esi
+	clc
+	mov $0, %edi	
+	mov liczbaCykli(,%esi,4), %eax  #pop %eax
+	push %edx	# store edx
+	
+
+	mov $8, %ecx	
+	_pushDigit2:
+
+	mov $0, %dx
+	mov $0x00000010, %ebx
+	div %ebx
+	call _checkValue
+	push %edx
+
+	dec %ecx
+	cmp $0, %ecx
+	jne _pushDigit2
+
+		
+	mov $8, %ecx
+	_showDigit2:
+	
+	pop %edx
+	mov %dl, cyfra(,%edi,1)
+	
+	push %ecx	
+
+	mov $SYSWRITE, %eax
+	mov $STDOUT, %ebx
+	mov $cyfra, %ecx
+	mov $cyfry_len, %edx
+	int $0x80
+
+	pop %ecx
+	dec %ecx
+	cmp $0, %ecx
+	jne _showDigit2
+	
+	
+	pop %edx
+	dec %edx
+	clc
+	cmp $0,%edx	# liczba 32 bitowych blokow do wypisania w edx
+	je _exit2
+	jmp _wypiszStack2  	
+
+	#-------Koniec wypisywania liczby cykli
+
+	
 
 	dodawanie:
 	mov $0, %edx	# wyzerowanie licznika indeksu wyniku
 	mov $0, %edi	# wyzerowanie licznika indeksu liczby 1
 	mov $0, %esi	# wyzerowanie licznika indeksu liczby 2
 
-	#wyzerowanie bufora
+	#wyzerowanie bufora wyniku
 	zerujWynik:
 	mov $0x00000000, %eax
 	mov %eax, wynik(,%edi,4)
@@ -177,6 +277,17 @@
 
 
 	clc	
+
+	# poczatek liczenia cykli
+	xor %eax, %eax	# wyzerowanie eax
+	cpuid	# serializacja -> komendy zostana wykonane w kolejnosci
+	rdtsc	# zwraca liczbe cykli procesora, 64 bity: edx <-> eax
+	push %eax	# zapamietanie wyniku liczby cykli na stosie
+	push %edx
+	xor %eax, %eax	# wyzerowanie rejestrow
+	xor %edx, %edx	# edx uzywam jako licznik indeksu
+	# koniec tej czesci liczenia cykli
+
 	jmp _dodawaniePierwszyRaz
 
 
@@ -221,7 +332,7 @@
 	
 	_dodawanie:
 	popf
-	_dodawaniePierwszyRaz:
+	_dodawaniePierwszyRaz: # jeszcze bez flagi przeniesienia
 
 	mov liczba1(,%edi,4),%eax
 	adc liczba2(,%esi,4) ,%eax      
@@ -258,7 +369,17 @@
 	mov $enter, %ecx
 	mov $enter_len, %edx
 	int $0x80
+	
+	jmp _wypiszLiczbeCykli
 
+	_exit2:
+
+	mov $SYSWRITE, %eax
+	mov $STDOUT, %ebx
+	mov $enter, %ecx
+	mov $enter_len, %edx
+	int $0x80
+	
 
 
 	mov $SYSEXIT, %eax
@@ -271,5 +392,6 @@
 	.lcomm liczba2, liczba2_len
 	.lcomm ASCIIstring, ASCIIstring_len
 	.lcomm wynik, 256
+	.lcomm liczbaCykli, 2
 
 
