@@ -14,7 +14,7 @@
 	cyfry_len = .-cyfra
 	
 	# dlugosc pierwszej liczby (w bajtach) - trzeba okreslic!
-	liczba1_len = 512    
+	liczba1_len = 512   
 	# dlugosc drugiej liczby (w bajtach) - trzeba okreslic!
 	liczba2_len=  512      
 
@@ -39,6 +39,7 @@
 
 	_start:	# Mnozenie w kolejnosci: liczba2 x liczba1
 
+
 	# ----------WCZYTANIE--LICZB--JAKO--JEDEN---CIAG----
 
 	mov $SYSREAD, %eax
@@ -53,7 +54,7 @@
 	mov $0, %edx
 
 	_ASCIItoHEX:
-	cmp $32, %esi
+	cmp $ASCIIstring_len, %esi
 	je mnozenie
 
 	mov ASCIIstring(,%esi,1), %al
@@ -271,14 +272,14 @@
 
 
 	#wyzerowanie bufora
-	zerujWynik:
-	mov $0x00000000, %eax
-	mov %eax, wynik(,%edi,4)
-	inc %edi
-	cmp $256, %edi
-	jl zerujWynik
+	#zerujWynik:
+	#mov $0x00000000, %eax
+	#mov %eax, wynik(,%edi,4)
+	#inc %edi
+	#cmp $256, %edi
+	#jl zerujWynik
 
-	mov $0,%edi
+	#mov $0,%edi
 
 	# poczatek liczenia cykli
 	xor %eax, %eax	# wyzerowanie eax

@@ -55,7 +55,7 @@
 	mov $0, %edx
 
 	_ASCIItoHEX:
-	cmp $32, %esi
+	cmp $ASCIIstring_len, %esi
 	je odejmowanie
 
 	mov ASCIIstring(,%esi,1), %al
