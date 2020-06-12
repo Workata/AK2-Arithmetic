@@ -21,7 +21,7 @@
 	cyfry_len=.-cyfra
 
 	# dlugosc liczby znakow na wejsciu (w bajtach)
-	ASCIIstring_len = liczba1_len+liczba2_len
+	ASCIIstring_len = (liczba1_len+liczba2_len)*2
 
 	# deklaracja przydatnych stringow
 	

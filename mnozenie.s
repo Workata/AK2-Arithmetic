@@ -14,11 +14,13 @@
 	cyfry_len = .-cyfra
 	
 	# dlugosc pierwszej liczby (w bajtach) - trzeba okreslic!
-	liczba1_len = 512      
+	liczba1_len = 512    
 	# dlugosc drugiej liczby (w bajtach) - trzeba okreslic!
 	liczba2_len=  512      
+
 	# dlugosc ciagu znakow na wejsciu (w bajtach) - obliczana
-	ASCIIstring_len = liczba1_len+liczba2_len  
+	# Uwaga: x2 poniewaz znaki ASCII maja 8b a cyfry hex 4b
+	ASCIIstring_len = (liczba1_len+liczba2_len)*2  
 
 	# znak 'enter' do wypisania po zakonczeniu programu
 	enter: .ascii "\n"
@@ -32,7 +34,7 @@
 	
 	# maksymalna liczba slow (32b) do wypisania na wyjsciu - obliczana
 	wordsOnStack =  (liczba1_len+liczba2_len)/4
-	wynik_len =1024 # liczba1_len+liczba2_len ->maks wynik
+	wynik_len =  liczba1_len+liczba2_len # ->maks wynik
 
 
 	_start:	# Mnozenie w kolejnosci: liczba2 x liczba1
