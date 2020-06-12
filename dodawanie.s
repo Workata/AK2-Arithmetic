@@ -11,8 +11,8 @@
 	.data
 	
 	# wielkosc liczb w bajtach
-	liczba1_len= 8	
-	liczba2_len= 8
+	liczba1_len= 384
+	liczba2_len= 384
 	# wielkosc liczb w slowach
 	liczba1_len_word = liczba1_len/4
 	liczba2_len_word = liczba2_len/4
