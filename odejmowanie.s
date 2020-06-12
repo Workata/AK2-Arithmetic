@@ -20,8 +20,8 @@
 	cyfra: .long 0x00	
 	cyfry_len=.-cyfra
 
-	# dlugosc liczby znakow na wejsciu (w ba
-	ASCIIstring_len = 32	
+	# dlugosc liczby znakow na wejsciu (w bajtach)
+	ASCIIstring_len = liczba1_len+liczba2_len
 
 	# deklaracja przydatnych stringow
 	
@@ -36,6 +36,7 @@
 
 	# zakladajac, ze liczba 2 jest nie dluzsza niz 1
 	wordsOnStack = liczba1_len_word+1
+	wynik_len = 516 # 512 (maks liczba) + 4 (slowo)
 	# w przeciwnym wypadku powinno byc liczba2_len_word +1
 
 	_start:
@@ -389,6 +390,6 @@
 	.lcomm liczba1, liczba1_len
 	.lcomm liczba2, liczba2_len
 	.lcomm ASCIIstring, ASCIIstring_len
-	.lcomm wynik, 256
+	.lcomm wynik, wynik_len
 	.lcomm liczbaCykli, 2
 

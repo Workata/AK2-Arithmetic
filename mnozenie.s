@@ -14,11 +14,11 @@
 	cyfry_len = .-cyfra
 	
 	# dlugosc pierwszej liczby (w bajtach) - trzeba okreslic!
-	liczba1_len = 8      
+	liczba1_len = 512      
 	# dlugosc drugiej liczby (w bajtach) - trzeba okreslic!
-	liczba2_len=  8      
+	liczba2_len=  512      
 	# dlugosc ciagu znakow na wejsciu (w bajtach) - obliczana
-	ASCIIstring_len = (liczba1_len+liczba2_len)*2  
+	ASCIIstring_len = liczba1_len+liczba2_len  
 
 	# znak 'enter' do wypisania po zakonczeniu programu
 	enter: .ascii "\n"
@@ -32,6 +32,8 @@
 	
 	# maksymalna liczba slow (32b) do wypisania na wyjsciu - obliczana
 	wordsOnStack =  (liczba1_len+liczba2_len)/4
+	wynik_len =1024 # liczba1_len+liczba2_len ->maks wynik
+
 
 	_start:	# Mnozenie w kolejnosci: liczba2 x liczba1
 
@@ -373,6 +375,6 @@
 	.lcomm liczba1, liczba1_len	# dlugosc liczby1 w bajtach
 	.lcomm liczba2, liczba2_len	# dlugosc liczby2 w bajtach
 	.lcomm ASCIIstring, ASCIIstring_len	# liczba znakow w pliku wej. (bajtow)
-	.lcomm wynik, 256
+	.lcomm wynik, wynik_len
 	.lcomm liczbaCykli, 8 # Roznica liczby cykli to maks 2 slowa 	
 	
