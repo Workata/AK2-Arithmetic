@@ -11,8 +11,9 @@
 	.data
 	
 	# wielkosc liczb w bajtach
-	liczba1_len= 384
-	liczba2_len= 384
+	# trzeba okreslic wielkosc liczb ! - reszta jest obliczana
+	liczba1_len= 512
+	liczba2_len= 512
 	# wielkosc liczb w slowach
 	liczba1_len_word = liczba1_len/4
 	liczba2_len_word = liczba2_len/4
@@ -20,7 +21,7 @@
 	cyfra: .long 0x00	
 	cyfry_len=.-cyfra
 
-	# dlugosc liczby znakow na wejsciu (w ba
+	# dlugosc liczby znakow na wejsciu (w bajtach)
 	ASCIIstring_len =(liczba1_len+liczba2_len)*2	
 
 	# deklaracja przydatnych stringow

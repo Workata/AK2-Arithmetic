@@ -11,8 +11,9 @@
 	.data
 	
 	# wielkosc liczb w bajtach
-	liczba1_len= 2048	
-	liczba2_len= 2048
+	# trzeba okreslic wielkosc liczb ! - reszta jest obliczana
+	liczba1_len= 512
+	liczba2_len= 512
 	# wielkosc liczb w slowach
 	liczba1_len_word = liczba1_len/4
 	liczba2_len_word = liczba2_len/4
