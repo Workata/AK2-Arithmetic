@@ -352,7 +352,7 @@
 	jmp _dodawanie
 
 	_dodajOstatniePrzeniesienie:
-	mov $1, %eax  		# push $1
+	mov $1, %eax  		
 	mov %eax, wynik(,%edx,4)
 	# juz nie trzeba inkrementowac edx
 	

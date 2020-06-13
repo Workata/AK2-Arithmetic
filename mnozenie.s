@@ -146,7 +146,7 @@
 	mov $0, %edi
 	mov $wordsOnStack, %esi	
 
-	_wypiszStack:	#Funkcja wypisujaca wynik ze stosu
+	_wypiszStack:	#Funkcja wypisujaca wynik
 	dec %esi
 	clc
 	mov $0, %edi	
